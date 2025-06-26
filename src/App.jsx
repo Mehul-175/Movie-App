@@ -6,17 +6,17 @@ import Search from "./components/Search"
 import MovieCard from "./components/MovieCard"
 import { updateSearch } from "./appwrite"
 
-const API_BASE_URL = "https://api.themoviedb.org/3"
+// const API_BASE_URL = "https://api.themoviedb.org/3"
 
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY
+// const API_KEY = import.meta.env.VITE_TMDB_API_KEY
 
-const API_OPTIONS = {
-  method: 'GET',
-  headers: {
-    accept: 'application/json',
-    Authorization: `Bearer ${API_KEY}`
-  }
-};
+// const API_OPTIONS = {
+//   method: 'GET',
+//   headers: {
+//     accept: 'application/json',
+//     Authorization: `Bearer ${API_KEY}`
+//   }
+// };
 
 function App() {
 
@@ -30,38 +30,41 @@ function App() {
     setDebounceSearch(searchTerm)
   }, 500, [searchTerm])
 
-  const fetchMovies = async (query) => {
-    setIsLoading(true)
-    setErrorMessage("")
-      try {
-        const endPoint = query
-        ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}`
-        : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`
-        const response = await fetch(endPoint, API_OPTIONS)
+ const fetchMovies = async (query) => {
+  setIsLoading(true);
+  setErrorMessage("");
+  try {
+    // Use your backend proxy API instead of TMDB directly
+    const endPoint = query
+      ? `/api/movieProxy?query=${encodeURIComponent(query)}`
+      : `/api/movieProxy`;
 
-        if(!response.ok) {
-          throw new Error("Network response was not ok");
-        }
+    const response = await fetch(endPoint);
 
-        const data = await response.json()
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
 
-        if(data.Response === "false") {
-          setErrorMessage(data.Error || "Error fetching movies. Please try again later.");
-        }
+    const data = await response.json();
 
-        setMovieList(data.results || [])
+    if (!data.results || data.results.length === 0) {
+      setErrorMessage("No movies found. Please try another search.");
+    }
 
-        if(query && data.results.length > 0) {
-          await updateSearch(query, data.results[0])
-        }
+    setMovieList(data.results || []);
 
-      } catch (error) {
-        console.error("Error fetching movies:", error);
-        setErrorMessage("Error fetching movies. Please try again later.");
-      } finally {
-        setIsLoading(false)
-      }
+    if (query && data.results.length > 0) {
+      await updateSearch(query, data.results[0]);
+    }
+
+  } catch (error) {
+    console.error("Error fetching movies:", error);
+    setErrorMessage("Error fetching movies. Please try again later.");
+  } finally {
+    setIsLoading(false);
   }
+};
+
   
   useEffect(() => {
     fetchMovies(debounceSearch);
