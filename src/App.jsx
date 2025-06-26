@@ -1,10 +1,9 @@
-/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react"
 import { useDebounce } from "react-use"
 import { BeatLoader } from "react-spinners"
 import Search from "./components/Search"
 import MovieCard from "./components/MovieCard"
-import { updateSearch } from "./appwrite"
+import { getTrendingMovies, updateSearch } from "./appwrite"
 
 // const API_BASE_URL = "https://api.themoviedb.org/3"
 
@@ -25,6 +24,7 @@ function App() {
   const [movieList, setMovieList] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [debounceSearch, setDebounceSearch] = useState('')
+  const [trendingMovies, setTrendingMovie] = useState([])
 
   useDebounce(() => {
     setDebounceSearch(searchTerm)
@@ -65,43 +65,66 @@ function App() {
   }
 };
 
+ const loadTrendingMovies = async () => {
+  try {
+    const Movies = await getTrendingMovies();
+    setTrendingMovie(Movies);
+  } catch (error) {
+    console.error("Error fetching trending movies:", error);
+  }
+ }
+
   
   useEffect(() => {
     fetchMovies(debounceSearch);
   }, [debounceSearch]);
   
+   useEffect(() => {
+    loadTrendingMovies();
+   }, [])
 
   return (
     <main>
-      <div className='pattern'/>
-      <div className='wrapper'>
+      <div className="pattern"/>
+
+      <div className="wrapper">
         <header>
           <img src="./hero.png" alt="Hero Banner" />
-          <h1>Find <span className='text-gradient'>Movies</span> You'll Enjoy Without the Hassle</h1>
+          <h1>Find <span className="text-gradient">Movies</span> You'll Enjoy Without the Hassle</h1>
 
-        <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
+          <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </header>
 
-        <section className='all-movies'>
-            <h2 className="mt-[40px]">All Movies</h2>
-            
-            {
-              isLoading ? (
-                <BeatLoader color="#fff" />
-              ) : errorMessage ? (
-                <p className="text-red-500">{errorMessage}</p>
-              ) : (
-                <ul>
-                   {
-                    movieList.map((movie) => (
-                      <MovieCard key={movie.id} movie={movie}/>
-                    ))
-                   }
-                </ul>
-              )
-            }
-        </section>
+        {trendingMovies.length > 0 && (
+          <section className="trending">
+            <h2>Trending Movies</h2>
 
+            <ul>
+              {trendingMovies.map((movie, index) => (
+                <li key={movie.$id}>
+                  <p>{index + 1}</p>
+                  <img src={movie.poster_url} alt={movie.title} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="all-movies">
+          <h2>All Movies</h2>
+
+          {isLoading ? (
+            <BeatLoader color="#fff" />
+          ) : errorMessage ? (
+            <p className="text-red-500">{errorMessage}</p>
+          ) : (
+            <ul>
+              {movieList.map((movie) => (
+                <MovieCard key={movie.id} movie={movie} />
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </main>
   )
