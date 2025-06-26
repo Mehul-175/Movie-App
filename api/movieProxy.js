@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   const apiKey = process.env.MOVIE_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "API key not configured" });
 
-  // Use different TMDB endpoints depending on if query is present
   const url = query
     ? `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(query)}&api_key=${apiKey}`
     : `https://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=${apiKey}`;
